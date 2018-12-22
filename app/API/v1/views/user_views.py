@@ -5,6 +5,7 @@ from .. import version1
 
 registered_user = UserModel()
 
+""" This route allows unregistered users to sign up """
 @version1.route("/auth/signup", methods=['GET', 'POST'])
 def registration():
     data = request.get_json()
@@ -37,6 +38,7 @@ def registration():
         "username": data['username']
     }), 201)
 
+""" This route allows registered users to log in """
 @version1.route("/auth/login", methods=['GET', 'POST'])
 def login():
     data = request.get_json()
@@ -44,21 +46,39 @@ def login():
     # log in info
     email = data['email'],
     password = data['password'],
-    
     # check for existing account
-    dups = [ex for ex in registered_user.db if ex['email'] == data['email']]
-    if dups:
+    exists = [ex for ex in registered_user.db if ex['email'] == data['email']]
+    if exists:
         user1 = LoginForm(email, password)
         user1.valid_email(data['email'])
         user1.valid_password(data['password'])
+        data['logged'] = True
+
+        return make_response(jsonify({
+            "status": "ok",
+            "message": "logged in as {}".format(data['email']),
+            "user": data
+        }), 201)
     else:
-        raise AssertionError('You have to log in first')
+        return make_response(jsonify({
+            "Error": "Account not found, try signing up"
+        }), 401)
 
-    return make_response(jsonify({
-        "status": "ok",
-        "message": "logged in as {}".format(data['email'])
-    }), 201)
 
+# """ This route allows registered users to log out """
+# @version1.route("/auth/logout/<int:logoutID>", methods=['GET', 'POST'])
+# def logout(logoutID):
+#     data = request.get_json()
+#     if not data['user']['logged']:
+#         raise AssertionError('You are not logged in!')
+#     elif data['user']['logged'] == True:
+#         data['user']['logged'] = False
+#     return make_response(jsonify({
+#         "status": "ok",
+#         "message": "user {} logged out".format(data['email'])
+#     }), 201)
+
+""" This route allows registered users to delete their existing accounts """
 @version1.route("/account/delete/<int:delID>", methods=['GET', 'DELETE'])
 def del_account(delID):
     
@@ -72,6 +92,7 @@ def del_account(delID):
         "users": registered_user.db
     }), 201)
 
+""" This route allows registered users to edit their accounts """
 @version1.route("/account/edit/<int:editID>", methods=['GET', 'PUT'])
 def edit_account():
     # updates
