@@ -1,6 +1,8 @@
-env/
+.env
 .pyc*
 .pytest
+.vscode
+__pycache__
 /__pycache__/
 instance/
 venv/
