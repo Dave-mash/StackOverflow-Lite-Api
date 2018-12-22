@@ -20,6 +20,7 @@ class RegistrationForm:
 
     def valid_username(self):
         if len(self.username) < 3 or len(self.username) > 20:
+            print('true')
             return AssertionError('Username should be at least 3 to 20 characters')
         else:
             return True

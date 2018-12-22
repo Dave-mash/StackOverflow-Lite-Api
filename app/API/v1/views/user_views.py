@@ -56,12 +56,17 @@ def login():
 
         return make_response(jsonify({
             "status": "ok",
-            "message": "logged in as {}".format(data['email']),
-            "user": data
+            "message": "logged in as {}".format(data['email'])
         }), 201)
+    elif len(registered_user.db) == 0:
+        return make_response(jsonify({
+            "status": 401,
+            "Error": "No registered users at the moment!"
+        }), 401)
     else:
         return make_response(jsonify({
-            "Error": "Account not found, try signing up"
+            "status": 401,
+            "Error": "Incorrect email or password, try again!"
         }), 401)
 
 
@@ -93,7 +98,7 @@ def del_account(delID):
     }), 201)
 
 """ This route allows registered users to edit their accounts """
-@version1.route("/account/edit/<int:editID>", methods=['GET', 'PUT'])
+@version1.route("/account/edit", methods=['GET', 'PUT'])
 def edit_account():
     # updates
     data = request.get_json()
@@ -102,5 +107,5 @@ def edit_account():
     return make_response(jsonify({
         "message": "{} account was updated".format(data['email']),
         "status": "ok",
-        "user": registered_user.db
+        "user": registered_user.db[0]
     }), 201)
