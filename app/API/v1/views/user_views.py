@@ -18,11 +18,23 @@ def registration():
         data['confirm_password']
     )
 
-    # validate user
-    user1.valid_username()
-    user1.valid_email(data['email'])
-    user1.valid_password(data['password'])
-    user1.valid_confirm_password()
+    def json(error):
+        return make_response(jsonify({
+            "status": 400,
+            "error": error
+        }), 201)
+
+    # prompt user fields
+    if not user1.data_exists():
+        return json('You missed a required field')
+    elif not user1.valid_username():
+        return json('Username should be at least 3 to 20 characters')
+    elif not user1.valid_email(data['email']):
+        return json('Invalid email address')
+    elif not user1.valid_confirm_password():
+        return json('Your passwords don\'t match')
+    elif not user1.valid_password(data['password']):
+        return json('Your password must have at least a lower,  uppercase, digit and special character and must be longer than 6 characters')
 
     # Register user
     registered_user.create_account(

@@ -10,17 +10,20 @@ import re
 class RegistrationForm:
     
     def __init__(self, username, email, password, confirm_password):
-        if not username or not email or not password or not confirm_password:
-            raise AssertionError('This field is required')
+        self.username = username
+        self.email = email
+        self.password = password
+        self.confirm_password = confirm_password
+    
+    def data_exists(self):
+        if not self.username or not self.email or not self.password or not self.confirm_password:
+            return False
         else:
-            self.username = username
-            self.email = email
-            self.password = password
-            self.confirm_password = confirm_password
+            return True
 
     def valid_username(self):
         if len(self.username) < 3 or len(self.username) > 20:
-            return AssertionError('Username should be at least 3 to 20 characters')
+            return False
         else:
             return True
 
@@ -30,9 +33,8 @@ class RegistrationForm:
         regex = re.compile(r"^[A-Za-z0-9\.\+_-]+@[A-Za-z0-9\._-]+\.[a-zA-Z]*$")
         
         if not re.match(regex, cls.email):
-            raise AssertionError('Invalid email address')
+            return False
         else:
-            print('valid email')
             return True
 
     @classmethod
@@ -42,16 +44,14 @@ class RegistrationForm:
         # regex = re.compile(r'^(?=\S{6,20}$)(?=.*?\d)(?=.*?[a-z])(?=.*?[A-Z](?=.*?[^A-Za-z\s0-9]))')
 
         if not re.match(regex, cls.password):
-            raise AssertionError('Your password must have at least a lower,  uppercase, digit and special character and must be longer than 6 characters')
+            return False
         else:
-            print('valid pass')
             return True
 
     def valid_confirm_password(self):
         if self.password != self.confirm_password:
-            raise AssertionError('Your passwords don\'t match')
+            return False
         else:
-            print('pass match')
             return True
 
     
