@@ -3,7 +3,8 @@ from werkzeug.security import generate_password_hash
 class UserModel:
     """ add user a user to a database """
 
-    def __init__(self):
+    def __init__(self, logged=False):
+        self.logged = logged,
         self.dup_email = None,
         self.dup_username = None,
         self.db = []
@@ -30,16 +31,15 @@ class UserModel:
             self.db.append(payload)
             return self.db
 
+    def edit_account(self, id, updates=None, logged=False):
+        from app.API.v1.views.user_views import registered_user
+        if logged:    
+            for i in range(len(registered_user.db)):
+                if registered_user.db[i]["id"] == id:
+                    registered_user.db[i] = updates
+                    return registered_user.db
+
     def del_account(self, id):
         user = [user for user in self.db if user['id'] == id]
         self.db.remove(user[0])
         return self.db
-
-    def edit_account(self, id, updates=None):
-        user = [user for user in self.db if user['id'] == id]
-        if updates:
-            user = updates
-            self.db[id] = user
-            return self.db
-        else:
-            return user

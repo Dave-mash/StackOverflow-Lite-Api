@@ -9,12 +9,11 @@ import re
 
 class RegistrationForm:
     
-    def __init__(self, username, email, password, confirm_password, logged=True):
+    def __init__(self, username, email, password, confirm_password):
         self.username = username
         self.email = email
         self.password = password
         self.confirm_password = confirm_password
-        self.logged = logged
     
     def data_exists(self):
         if not self.username or not self.email or not self.password or not self.confirm_password:
@@ -63,16 +62,16 @@ class LoginForm(RegistrationForm):
         self.password = password
         self.questions = questions
 
-    def write_question(self, question, answers=[]):
-        que = Questions(self.email, question, answers)
+    def get_questions(self, question):
+        que = Questions(self.email, self.questions)
         self.questions.append(que)
 
 class Questions(LoginForm):
 
-    def __init(self, email, question, answers):
+    def __init(self, email, title, question):
+        self.title = title
         self.email = email
         self.question = question
-        self.answers = answers
 
 # user = LoginForm(
 #     data['email'],
