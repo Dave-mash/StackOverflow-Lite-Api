@@ -53,14 +53,25 @@ class RegistrationForm:
             return False
         else:
             return True
-
-    
+   
 
 class LoginForm(RegistrationForm):
 
-    def __init__(self, email, password):
+    def __init__(self, email, password, questions=[]):
         self.email = email
         self.password = password
+        self.questions = questions
+
+    def get_questions(self, question):
+        que = Questions(self.email, self.questions)
+        self.questions.append(que)
+
+class Questions(LoginForm):
+
+    def __init(self, email, title, question):
+        self.title = title
+        self.email = email
+        self.question = question
 
 # user = LoginForm(
 #     data['email'],

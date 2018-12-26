@@ -1,15 +1,24 @@
-from flask import Flask, request, jsonify, make_response
+from flask import request, jsonify, make_response
 from app.API.v1.utils.validators import RegistrationForm, LoginForm
 from app.API.v1.models.user_model import UserModel
+from app.API.v1.models.questions_model import QuestionsModel 
 from .. import version1
 
-registered_user = UserModel()
+user_model = UserModel()
+questions_model = QuestionsModel()
+
+@version1.route("/")
+def get():
+    return make_response(jsonify({
+        "users": user_model.db
+    }), 201)
 
 """ This route allows unregistered users to sign up """
 @version1.route("/auth/signup", methods=['GET', 'POST'])
 def registration():
     data = request.get_json()
-    
+    # questions = [que for que in questions_model.db if que['id'] == ]
+
     # Create user
     user1 = RegistrationForm(
         data['username'],
@@ -17,13 +26,17 @@ def registration():
         data['password'],
         data['confirm_password']
     )
-
     def json(error):
         return make_response(jsonify({
             "status": 400,
             "error": error
         }), 201)
 
+    # if user_model.dup_email:
+    #     return json('This account already exists')
+    # elif user_model.dup_username:
+    #     return json('This username is taken')
+    
     # prompt user fields
     if not user1.data_exists():
         return json('You missed a required field')
@@ -35,18 +48,25 @@ def registration():
         return json('Your passwords don\'t match')
     elif not user1.valid_password(data['password']):
         return json('Your password must have at least a lower,  uppercase, digit and special character and must be longer than 6 characters')
-
+    
     # Register user
-    registered_user.create_account(
+    user_model.create_account(
         {
             "username": data['username'],
             "email": data['email'],
             "password": data['password'],
+            "logged on": user_model.logged[0]
+            # "questions": questions 
         }
     )
+    if user_model.dup_email:
+        return json(user_model.dup_email['error'])
+    elif user_model.dup_username:
+        return json(user_model.dup_username['error'])
 
     return make_response(jsonify({
         "status": "ok",
+        "message": "registration successful",
         "username": data['username']
     }), 201)
 
@@ -54,22 +74,23 @@ def registration():
 @version1.route("/auth/login", methods=['GET', 'POST'])
 def login():
     data = request.get_json()
-    
-    # log in info
-    email = data['email'],
-    password = data['password'],
+
+    email = data['email']
+    password = data['password']
+
     # check for existing account
-    exists = [ex for ex in registered_user.db if ex['email'] == data['email']]
+    exists = [ex for ex in user_model.db if ex['email'] == data['email']]
+    question = [que for que in questions_model.db if que['email'] == data['email']]
     if exists:
-        user1 = LoginForm(email, password)
-        user1.valid_email(data['email'])
-        user1.valid_password(data['password'])
-        data['logged'] = True
+        log_user = LoginForm(email, password)
+        log_user.get_questions(question[0])
+        log_user.valid_email(data['email'])
+        log_user.valid_password(data['password'])
+        exists[0]["logged on"] = True
 
         return make_response(jsonify({
-            "status": "ok",
-            "message": "logged in as {}".format(data['email']),
-            "user": data
+            "logged": exists[0]["logged on"],
+            "message": "logged in as {}".format(data['email'])
         }), 201)
     else:
         return make_response(jsonify({
@@ -77,42 +98,76 @@ def login():
         }), 401)
 
 
-# """ This route allows registered users to log out """
-# @version1.route("/auth/logout/<int:logoutID>", methods=['GET', 'POST'])
-# def logout(logoutID):
-#     data = request.get_json()
-#     if not data['user']['logged']:
-#         raise AssertionError('You are not logged in!')
-#     elif data['user']['logged'] == True:
-#         data['user']['logged'] = False
-#     return make_response(jsonify({
-#         "status": "ok",
-#         "message": "user {} logged out".format(data['email'])
-#     }), 201)
+""" This route allows a registered user to log out """
+@version1.route("/auth/logout", methods=['GET', 'POST'])
+def logout():
+    data = request.get_json()
+
+    logged_user = [user for user in user_model.db if user['email'] == data['email']]
+    
+    if logged_user:
+        logged_user[0]['logged on'] = False
+        return make_response(jsonify({
+            "status": "ok",
+            "message": "user {} logged out".format(data['email'])
+        }), 201)
+    elif not logged_user:
+        return make_response(jsonify({
+            "status": 404,
+            "Error": "You are not logged in!"
+        }), 404)
+
 
 """ This route allows registered users to delete their existing accounts """
 @version1.route("/account/delete/<int:delID>", methods=['GET', 'DELETE'])
 def del_account(delID):
+    data = request.get_json()
     
-    # matches out the id passed in it
-    deleted = [remove for remove in registered_user.db if delID == remove['id']]
-    registered_user.del_account(delID)
-
-    return make_response(jsonify({
-        "status": "ok",
-        "message": "account: '{}' was deleted".format(deleted[0].get('email')),
-        "users": registered_user.db
-    }), 201)
+    """ compares and matches the details of the account """
+    deleted = [
+        deleted for deleted in user_model.db if deleted['email'] == data['email'] and deleted['password'] == data['password']
+    ]
+    if deleted:
+        if user_model.db[delID]['logged on']:
+            user_model.del_account(delID)
+            return make_response(jsonify({
+                "status": "ok",
+                "message": "account: '{}' was deleted".format(data['email'])
+            }), 201)
+        else:
+            return make_response(jsonify({
+                "Error": "You're not logged in!"
+            }), 404)
+    elif not deleted:
+        return make_response(jsonify({
+            "status": 404,
+            "Error": "You are not logged in!"
+        }), 404)
 
 """ This route allows registered users to edit their accounts """
 @version1.route("/account/edit/<int:editID>", methods=['GET', 'PUT'])
-def edit_account():
-    # updates
+def edit_account(editID):
     data = request.get_json()
-    registered_user.edit_account(data['id'], data)
 
-    return make_response(jsonify({
-        "message": "{} account was updated".format(data['email']),
-        "status": "ok",
-        "user": registered_user.db
-    }), 201)
+    """ compares and matches the details of the account """
+    update = [
+        update for update in user_model.db if update['email'] == data['email'] and update['password'] == data['password']
+    ]
+    if update:
+        if user_model.db[editID]['logged on']:
+            user_model.edit_account(editID, data, user_model.logged)
+            return make_response(jsonify({
+                "message": "{} account was updated".format(data['email']),
+                "status": "ok"
+            }), 201)
+        else:
+            return make_response(jsonify({
+                "Error": "You're not logged in!"
+            }), 404)
+
+    else:
+        return make_response(jsonify({
+            "status": 404,
+            "Error": "Sorry account does not exist!"
+        }), 404)
+
