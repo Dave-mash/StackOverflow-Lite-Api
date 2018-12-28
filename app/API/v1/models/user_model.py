@@ -18,12 +18,12 @@ class UserModel:
         self.dup_username = [users for users in self.db if users['username'] == payload['username']]
         
         if self.dup_email:
-            self.dup_email = {"error": "This account exists"}
+            self.dup_email = {"Error": "This account exists"}
         else:
             self.dup_email = None
         
         if self.dup_username:
-            self.dup_username = {"error": "This username is taken"}
+            self.dup_username = {"Error": "This username is taken"}
         else:
             self.dup_username = None
         
@@ -32,7 +32,7 @@ class UserModel:
             return self.db
 
     def edit_account(self, id, updates=None, logged=False):
-        from app.API.v1.views.user_views import registered_user
+        from app.API.v1.views.user_views import user_model as registered_user
         if logged:    
             for i in range(len(registered_user.db)):
                 if registered_user.db[i]["id"] == id:
