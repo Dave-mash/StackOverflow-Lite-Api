@@ -12,7 +12,7 @@ def get_questions():
     return make_response(jsonify({
         "status": "ok",
         "questions": questions_list.db
-    }), 201)
+    }), 200)
 
 """ This route grabs a single question and displays """
 @version1.route("/questions/<int:questionID>", methods=['GET'])

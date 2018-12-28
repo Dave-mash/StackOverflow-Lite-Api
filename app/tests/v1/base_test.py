@@ -1,14 +1,16 @@
 import unittest
+from app import create_app
 
 class BaseTest(unittest.TestCase):
 
     def setUp(self):
         """ Initializes app"""
-        from app import create_app
         self.app = create_app('testing')
         self.client = self.app.test_client()
     
-        self.user1 = {
+        self.user = {
+            "first_name": "David",
+            "last_name": "Mwangi",
             "username": "Dave",
             "email": "dave@gmail.com",
             "password": "abc123",

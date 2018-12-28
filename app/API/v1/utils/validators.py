@@ -9,7 +9,9 @@ import re
 
 class RegistrationForm:
     
-    def __init__(self, username, email, password, confirm_password):
+    def __init__(self, Fname, Lname, username, email, password, confirm_password):
+        self.Fname = Fname
+        self.Lname = Lname
         self.username = username
         self.email = email
         self.password = password
@@ -21,7 +23,7 @@ class RegistrationForm:
         else:
             return True
 
-    def valid_username(self):
+    def valid_name(self):
         if len(self.username) < 3 or len(self.username) > 20:
             return False
         else:

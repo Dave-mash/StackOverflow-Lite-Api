@@ -7,11 +7,11 @@ from .. import version1
 user_model = UserModel()
 questions_model = QuestionsModel()
 
-@version1.route("/")
+@version1.route("/users")
 def get():
     return make_response(jsonify({
         "users": user_model.db
-    }), 201)
+    }), 200)
 
 """ This route allows unregistered users to sign up """
 @version1.route("/auth/signup", methods=['GET', 'POST'])
@@ -21,6 +21,8 @@ def registration():
 
     # Create user
     user1 = RegistrationForm(
+        data['first_name'],
+        data['last_name'],
         data['username'],
         data['email'],
         data['password'],
@@ -29,8 +31,8 @@ def registration():
     def json(error):
         return make_response(jsonify({
             "status": 400,
-            "error": error
-        }), 201)
+            "Error": error
+        }), 400)
 
     # if user_model.dup_email:
     #     return json('This account already exists')
@@ -40,8 +42,8 @@ def registration():
     # prompt user fields
     if not user1.data_exists():
         return json('You missed a required field')
-    elif not user1.valid_username():
-        return json('Username should be at least 3 to 20 characters')
+    elif not user1.valid_name():
+        return json('Your name should be at least 3 to 20 characters')
     elif not user1.valid_email(data['email']):
         return json('Invalid email address')
     elif not user1.valid_confirm_password():
@@ -60,13 +62,13 @@ def registration():
         }
     )
     if user_model.dup_email:
-        return json(user_model.dup_email['error'])
+        return json(user_model.dup_email['Error'])
     elif user_model.dup_username:
-        return json(user_model.dup_username['error'])
+        return json(user_model.dup_username['Error'])
 
     return make_response(jsonify({
         "status": "ok",
-        "message": "registration successful",
+        "message": "{} registered successfully".format(data['email']),
         "username": data['username']
     }), 201)
 
@@ -83,7 +85,7 @@ def login():
     question = [que for que in questions_model.db if que['email'] == data['email']]
     if exists:
         log_user = LoginForm(email, password)
-        log_user.get_questions(question[0])
+        # log_user.get_questions(question[0] or question[0])
         log_user.valid_email(data['email'])
         log_user.valid_password(data['password'])
         exists[0]["logged on"] = True
@@ -95,7 +97,7 @@ def login():
     else:
         return make_response(jsonify({
             "Error": "Account not found, try signing up"
-        }), 401)
+        }), 404)
 
 
 """ This route allows a registered user to log out """
