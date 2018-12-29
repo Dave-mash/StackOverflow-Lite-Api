@@ -11,7 +11,7 @@ class TestUser(BaseTest):
             content_type='application/json')
         return res
 
-    def get_req(self, path):
+    def get_req(self, path='/api/v1/users'):
         """ This function makes use of the test client to send GET requests """
         res = self.client.get(path)
         return res
@@ -22,7 +22,7 @@ class TestUser(BaseTest):
         payload = self.post_req(data=self.user)
 
         self.assertEqual(payload.status_code, 201)
-        self.assertEqual(self.user['username'], payload.json['username'])
+        # self.assertEqual(self.user['username'], payload.json['username'])
         self.assertEqual(payload.json['message'], "{} registered successfully".format(self.user['email']))
 
     def test_sign_up_user_invalid_input(self):
@@ -67,7 +67,7 @@ class TestUser(BaseTest):
         self.assertEqual(payload.json['Error'], "You missed a required field")
 
     def test_sign_up_user_existing_account(self):
-        """ Test that registering with an already taken username or email, will throw an error """
+        """ Test that registering with an existing username or email, will throw an error """
 
         user = { **self.user }
         payload = self.post_req(data=user)
@@ -109,6 +109,6 @@ class TestUser(BaseTest):
     def test_get_all_users(self):
         """ Test that all users can be fetched """
 
-        get = self.get_req('/api/v1/users')
+        get = self.get_req()
         self.assertEqual(get.status_code, 200)
         self.assertEqual(get.json['users'], [])

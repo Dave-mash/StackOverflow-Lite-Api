@@ -1,35 +1,30 @@
-from werkzeug.security import generate_password_hash
+from datetime import datetime
 
 class UserModel:
     """ add user a user to a database """
 
-    def __init__(self, logged=False):
+    def __init__(
+        self,
+        Fname='Fname',
+        Lname='Lname',
+        username='username',
+        email='username@demo.com',
+        password='password',
+        logged=False
+    ):
         self.logged = logged,
-        self.dup_email = None,
-        self.dup_username = None,
+        self.Fname = Fname
+        self.Lname = Lname
+        self.username = username
+        self.email = email
+        self.password = password
+        self.date_created = datetime.now()
         self.db = []
 
     def create_account(self, payload):
-        generate_password_hash(payload['password'])
         payload["id"] = len(self.db)
-        
-        # Check for duplicate email and username
-        self.dup_email = [users for users in self.db if users['email'] == payload['email']]
-        self.dup_username = [users for users in self.db if users['username'] == payload['username']]
-        
-        if self.dup_email:
-            self.dup_email = {"Error": "This account exists"}
-        else:
-            self.dup_email = None
-        
-        if self.dup_username:
-            self.dup_username = {"Error": "This username is taken"}
-        else:
-            self.dup_username = None
-        
-        if not self.dup_email and not self.dup_username:
-            self.db.append(payload)
-            return self.db
+        self.db.append(payload)
+        return self.db
 
     def edit_account(self, id, updates=None, logged=False):
         from app.API.v1.views.user_views import user_model as registered_user

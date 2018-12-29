@@ -1,45 +1,43 @@
-from flask import request, jsonify, make_response
+from werkzeug.security import generate_password_hash, check_password_hash
+from flask import request, jsonify, make_response, Blueprint
 from app.API.v1.utils.validators import RegistrationForm, LoginForm
 from app.API.v1.models.user_model import UserModel
 from app.API.v1.models.questions_model import QuestionsModel 
-from .. import version1
+# from .. import version1
 
-user_model = UserModel()
+users_v1 = Blueprint('users_v1', __name__, url_prefix='/api/v1/')
 questions_model = QuestionsModel()
+user_model = UserModel()
 
-@version1.route("/users")
+@users_v1.route("/users")
 def get():
     return make_response(jsonify({
-        "users": user_model.db
+        "users": UserModel().db
     }), 200)
 
 """ This route allows unregistered users to sign up """
-@version1.route("/auth/signup", methods=['GET', 'POST'])
+@users_v1.route("/auth/signup", methods=['GET', 'POST'])
 def registration():
     data = request.get_json()
-    # questions = [que for que in questions_model.db if que['id'] == ]
 
-    # Create user
-    user1 = RegistrationForm(
-        data['first_name'],
-        data['last_name'],
-        data['username'],
-        data['email'],
-        data['password'],
-        data['confirm_password']
-    )
+    val_user = {
+        "Fname": data['first_name'],
+        "Lname": data['last_name'],
+        "username": data['username'],
+        "email": data['email'],
+        "password": data['password'],
+        "confirm_password": data['confirm_password']
+    }
+    
+    # Validator instance
+    user1 = RegistrationForm(**val_user)
     def json(error):
         return make_response(jsonify({
             "status": 400,
             "Error": error
         }), 400)
 
-    # if user_model.dup_email:
-    #     return json('This account already exists')
-    # elif user_model.dup_username:
-    #     return json('This username is taken')
-    
-    # prompt user fields
+    # validate user fields
     if not user1.data_exists():
         return json('You missed a required field')
     elif not user1.valid_name():
@@ -51,49 +49,65 @@ def registration():
     elif not user1.valid_password(data['password']):
         return json('Your password must have at least a lower,  uppercase, digit and special character and must be longer than 6 characters')
     
-    # Register user
-    user_model.create_account(
-        {
-            "username": data['username'],
-            "email": data['email'],
-            "password": data['password'],
-            "logged on": user_model.logged[0]
-            # "questions": questions 
-        }
+    new_user = UserModel(
+        user1.Fname,
+        user1.Lname,
+        user1.username,
+        user1.email,
+        user1.password,
     )
-    if user_model.dup_email:
-        return json(user_model.dup_email['Error'])
-    elif user_model.dup_username:
-        return json(user_model.dup_username['Error'])
+    dup_email = [users for users in new_user.db if users['email'] == new_user.email]
+    dup_username = [users for users in new_user.db if users['username'] == new_user.username]
 
-    return make_response(jsonify({
-        "status": "ok",
-        "message": "{} registered successfully".format(data['email']),
-        "username": data['username']
-    }), 201)
+    if dup_email:
+        return json('This account exists')
+    elif dup_username:
+        return json('This username is taken')
+    else:
+        # Register user
+        new_user.create_account(
+            {
+                "username": data['username'],
+                "email": data['email'],
+                "password": generate_password_hash(data['password']),
+                "logged on": new_user.logged[0]
+            }
+        )
+
+        return make_response(jsonify({
+            "message": "{} registered successfully".format(data['email']),
+            "created_at": new_user.date_created,
+            "name": "{} {}".format(data['first_name'], data['last_name']),
+            "list": new_user.db
+        }), 201)
 
 """ This route allows registered users to log in """
-@version1.route("/auth/login", methods=['GET', 'POST'])
+@users_v1.route("/auth/login", methods=['GET', 'POST'])
 def login():
     data = request.get_json()
 
     email = data['email']
     password = data['password']
+    log_user = LoginForm(email, password)
+    log_user.valid_email(data['email'])
+    log_user.valid_password(data['password'])
 
     # check for existing account
-    exists = [ex for ex in user_model.db if ex['email'] == data['email']]
-    question = [que for que in questions_model.db if que['email'] == data['email']]
-    if exists:
-        log_user = LoginForm(email, password)
-        # log_user.get_questions(question[0] or question[0])
-        log_user.valid_email(data['email'])
-        log_user.valid_password(data['password'])
-        exists[0]["logged on"] = True
+    exists = [ex for ex in user_model.db if ex['email'] == log_user.email]
+    pass_match = [pas for pas in user_model.db if check_password_hash(pas['password'], password)]
 
-        return make_response(jsonify({
-            "logged": exists[0]["logged on"],
-            "message": "logged in as {}".format(data['email'])
-        }), 201)
+    if exists:
+        if pass_match:
+            exists[0]["logged on"] = True
+
+            return make_response(jsonify({
+                "logged": exists[0]["logged on"],
+                "message": "logged in as {}".format(data['email'])
+            }), 201)
+        else:
+            return make_response(jsonify({
+                "Error": "Incorrect password please check your credentials"
+            }), 201)
     else:
         return make_response(jsonify({
             "Error": "Account not found, try signing up"
@@ -101,7 +115,7 @@ def login():
 
 
 """ This route allows a registered user to log out """
-@version1.route("/auth/logout", methods=['GET', 'POST'])
+@users_v1.route("/auth/logout", methods=['GET', 'POST'])
 def logout():
     data = request.get_json()
 
@@ -121,7 +135,7 @@ def logout():
 
 
 """ This route allows registered users to delete their existing accounts """
-@version1.route("/account/delete/<int:delID>", methods=['GET', 'DELETE'])
+@users_v1.route("/account/delete/<int:delID>", methods=['GET', 'DELETE'])
 def del_account(delID):
     data = request.get_json()
     
@@ -147,7 +161,7 @@ def del_account(delID):
         }), 404)
 
 """ This route allows registered users to edit their accounts """
-@version1.route("/account/edit/<int:editID>", methods=['GET', 'PUT'])
+@users_v1.route("/account/edit/<int:editID>", methods=['GET', 'PUT'])
 def edit_account(editID):
     data = request.get_json()
 
