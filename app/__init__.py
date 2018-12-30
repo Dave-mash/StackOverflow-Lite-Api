@@ -10,6 +10,10 @@ def create_app(config_name="development"):
     app.config.from_object(app_config["development"])
     app.url_map.strict_slashes = False
     app.register_blueprint(users_v1)
+    app = Flask(__name__)
+    app.config.from_object(app_config["development"])
+    
+    app.register_blueprint(user_v1)
     app.register_blueprint(questions_v1)
 
     return app

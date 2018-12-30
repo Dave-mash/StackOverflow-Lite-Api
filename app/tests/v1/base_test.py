@@ -24,8 +24,10 @@ class BaseTest(unittest.TestCase):
         }
 
     def tearDown(self):
-        self.app.testing = False
-        self.app = None
+        
+        with self.app.app_context():
+            self.app.testing = False
+            self.app = None
 
 if __name__ == '__main__':
     unittest.main(verbosity=2) # get the help string of every test and the result
