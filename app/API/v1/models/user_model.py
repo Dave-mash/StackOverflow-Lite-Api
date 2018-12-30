@@ -1,30 +1,33 @@
-from datetime import datetime
 
 class UserModel:
     """ add user a user to a database """
 
-    def __init__(
-        self,
-        Fname='Fname',
-        Lname='Lname',
-        username='username',
-        email='username@demo.com',
-        password='password',
-        logged=False
-    ):
+    def __init__(self, logged=False):
         self.logged = logged,
-        self.Fname = Fname
-        self.Lname = Lname
-        self.username = username
-        self.email = email
-        self.password = password
-        self.date_created = datetime.now()
+        self.dup_email = None,
+        self.dup_username = None,
         self.db = []
 
     def create_account(self, payload):
         payload["id"] = len(self.db)
-        self.db.append(payload)
-        return self.db
+        
+        # Check for duplicate email and username
+        self.dup_email = [users for users in self.db if users['email'] == payload['email']]
+        self.dup_username = [users for users in self.db if users['username'] == payload['username']]
+        
+        if self.dup_email:
+            self.dup_email = {"Error": "This account exists"}
+        else:
+            self.dup_email = None
+        
+        if self.dup_username:
+            self.dup_username = {"Error": "This username is taken"}
+        else:
+            self.dup_username = None
+        
+        if not self.dup_email and not self.dup_username:
+            self.db.append(payload)
+            return self.db
 
     def edit_account(self, id, updates=None, logged=False):
         from app.API.v1.views.user_views import user_model as registered_user

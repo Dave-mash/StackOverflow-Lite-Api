@@ -6,7 +6,7 @@ from .API.v1.views.questions_views import questions_v1
 
 def create_app(config_name="development"):
     """ Set up the application """
-    app = Flask(__name__)
+    app = Flask(__name__, instance_relative_config=True)
     app.config.from_object(app_config["development"])
     app.url_map.strict_slashes = False
     app.register_blueprint(users_v1)

@@ -3,40 +3,45 @@ from flask import request, jsonify, make_response, Blueprint
 from app.API.v1.utils.validators import RegistrationForm, LoginForm
 from app.API.v1.models.user_model import UserModel
 from app.API.v1.models.questions_model import QuestionsModel 
+from datetime import datetime
 # from .. import version1
 
 users_v1 = Blueprint('users_v1', __name__, url_prefix='/api/v1/')
-questions_model = QuestionsModel()
 user_model = UserModel()
+questions_model = QuestionsModel()
 
 @users_v1.route("/users")
 def get():
     return make_response(jsonify({
-        "users": UserModel().db
+        "users": user_model.db
     }), 200)
 
 """ This route allows unregistered users to sign up """
 @users_v1.route("/auth/signup", methods=['GET', 'POST'])
 def registration():
     data = request.get_json()
+    # questions = [que for que in questions_model.db if que['id'] == ]
 
-    val_user = {
-        "Fname": data['first_name'],
-        "Lname": data['last_name'],
-        "username": data['username'],
-        "email": data['email'],
-        "password": data['password'],
-        "confirm_password": data['confirm_password']
-    }
-    
     # Validator instance
-    user1 = RegistrationForm(**val_user)
+    user1 = RegistrationForm(
+        data['first_name'],
+        data['last_name'],
+        data['username'],
+        data['email'],
+        data['password'],
+        data['confirm_password']
+    )
     def json(error):
         return make_response(jsonify({
             "status": 400,
             "Error": error
         }), 400)
 
+    # if user_model.dup_email:
+    #     return json('This account already exists')
+    # elif user_model.dup_username:
+    #     return json('This username is taken')
+    
     # validate user fields
     if not user1.data_exists():
         return json('You missed a required field')
@@ -49,37 +54,26 @@ def registration():
     elif not user1.valid_password(data['password']):
         return json('Your password must have at least a lower,  uppercase, digit and special character and must be longer than 6 characters')
     
-    new_user = UserModel(
-        user1.Fname,
-        user1.Lname,
-        user1.username,
-        user1.email,
-        user1.password,
+    # Register user
+    user_model.create_account(
+        {
+            "username": data['username'],
+            "email": data['email'],
+            "password": generate_password_hash(data['password']),
+            "logged on": user_model.logged[0],
+            "created_at": datetime.now()
+            # "questions": questions 
+        }
     )
-    dup_email = [users for users in new_user.db if users['email'] == new_user.email]
-    dup_username = [users for users in new_user.db if users['username'] == new_user.username]
+    if user_model.dup_email:
+        return json(user_model.dup_email['Error'])
+    elif user_model.dup_username:
+        return json(user_model.dup_username['Error'])
 
-    if dup_email:
-        return json('This account exists')
-    elif dup_username:
-        return json('This username is taken')
-    else:
-        # Register user
-        new_user.create_account(
-            {
-                "username": data['username'],
-                "email": data['email'],
-                "password": generate_password_hash(data['password']),
-                "logged on": new_user.logged[0]
-            }
-        )
-
-        return make_response(jsonify({
-            "message": "{} registered successfully".format(data['email']),
-            "created_at": new_user.date_created,
-            "name": "{} {}".format(data['first_name'], data['last_name']),
-            "list": new_user.db
-        }), 201)
+    return make_response(jsonify({
+        "message": "{} registered successfully".format(data['email']),
+        "username": data['username']
+    }), 201)
 
 """ This route allows registered users to log in """
 @users_v1.route("/auth/login", methods=['GET', 'POST'])
@@ -97,12 +91,14 @@ def login():
     pass_match = [pas for pas in user_model.db if check_password_hash(pas['password'], password)]
 
     if exists:
+        # log_user.get_questions(question[0] or question[0])
         if pass_match:
             exists[0]["logged on"] = True
 
             return make_response(jsonify({
                 "logged": exists[0]["logged on"],
-                "message": "logged in as {}".format(data['email'])
+                "message": "logged in as {}".format(data['email']),
+                "created_at": exists[0]['created_at']
             }), 201)
         else:
             return make_response(jsonify({
