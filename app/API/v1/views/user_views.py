@@ -57,7 +57,6 @@ def registration():
             "username": data['username'],
             "email": data['email'],
             "password": data['password'],
-            "logged on": user_model.logged[0]
             # "questions": questions 
         }
     )
@@ -81,24 +80,18 @@ def login():
     password = data['password']
 
     # check for existing account
-    exists = [ex for ex in user_model.db if ex['email'] == data['email']]
-    question = [que for que in questions_model.db if que['email'] == data['email']]
-    if exists:
-        log_user = LoginForm(email, password)
-        # log_user.get_questions(question[0] or question[0])
-        log_user.valid_email(data['email'])
-        log_user.valid_password(data['password'])
-        exists[0]["logged on"] = True
-
+    if user_model.get_user(email, password) == 'SUCCESS':
         return make_response(jsonify({
-            "logged": exists[0]["logged on"],
-            "message": "logged in as {}".format(data['email'])
+            "message": "logged in as {}".format(email)
         }), 201)
-    else:
+    elif user_model.get_user(email, password) == 'FAILURE':
         return make_response(jsonify({
-            "Error": "Account not found, try signing up"
+            "Error": "Account does not exist, try signing up"
         }), 404)
-
+    elif user_model.get_user(email, password) == 'INVALID':
+        return make_response(jsonify({
+            "Error": "Invalid credentials, please check your email and password!"
+        }), 404)
 
 """ This route allows a registered user to log out """
 @version1.route("/auth/logout", methods=['GET', 'POST'])
@@ -108,7 +101,6 @@ def logout():
     logged_user = [user for user in user_model.db if user['email'] == data['email']]
     
     if logged_user:
-        logged_user[0]['logged on'] = False
         return make_response(jsonify({
             "status": "ok",
             "message": "user {} logged out".format(data['email'])
@@ -116,7 +108,7 @@ def logout():
     elif not logged_user:
         return make_response(jsonify({
             "status": 404,
-            "Error": "You are not logged in!"
+            "Error": "No logged users!"
         }), 404)
 
 
@@ -126,20 +118,13 @@ def del_account(delID):
     data = request.get_json()
     
     """ compares and matches the details of the account """
-    deleted = [
-        deleted for deleted in user_model.db if deleted['email'] == data['email'] and deleted['password'] == data['password']
-    ]
+    deleted = [deleted for deleted in user_model.db if deleted['email'] == data['email']]
     if deleted:
-        if user_model.db[delID]['logged on']:
-            user_model.del_account(delID)
-            return make_response(jsonify({
-                "status": "ok",
-                "message": "account: '{}' was deleted".format(data['email'])
-            }), 201)
-        else:
-            return make_response(jsonify({
-                "Error": "You're not logged in!"
-            }), 404)
+        user_model.del_account(delID)
+        return make_response(jsonify({
+            "status": "ok",
+            "message": "account: '{}' was deleted".format(data['email'])
+        }), 201)
     elif not deleted:
         return make_response(jsonify({
             "status": 404,
@@ -152,21 +137,14 @@ def edit_account(editID):
     data = request.get_json()
 
     """ compares and matches the details of the account """
-    update = [
-        update for update in user_model.db if update['email'] == data['email'] and update['password'] == data['password']
-    ]
+    update = [update for update in user_model.db if update['email'] == data['email']]
+    
     if update:
-        if user_model.db[editID]['logged on']:
-            user_model.edit_account(editID, data, user_model.logged)
-            return make_response(jsonify({
-                "message": "{} account was updated".format(data['email']),
-                "status": "ok"
-            }), 201)
-        else:
-            return make_response(jsonify({
-                "Error": "You're not logged in!"
-            }), 404)
-
+        user_model.edit_account(editID, data)
+        return make_response(jsonify({
+            "message": "{} account was updated".format(data['email']),
+            "status": "ok"
+        }), 201)
     else:
         return make_response(jsonify({
             "status": 404,
