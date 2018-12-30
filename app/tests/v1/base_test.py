@@ -17,6 +17,12 @@ class BaseTest(unittest.TestCase):
             "confirm_password": "abc123"
         }
         
+        self.question = {
+            "email": "email@test.com",
+            "title": "email",
+            "question": "What is JWT in programming?"
+        }
+
     def tearDown(self):
         
         with self.app.app_context():

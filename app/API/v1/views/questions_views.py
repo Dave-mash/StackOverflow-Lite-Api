@@ -1,32 +1,38 @@
-from flask import request, jsonify, make_response
+from flask import request, jsonify, make_response, Blueprint
 import re
 from app.API.v1.models.questions_model import QuestionsModel
 from app.API.v1.utils.validators import Questions
-from .. import version1
+# from .. import version1
 
 questions_list = QuestionsModel()
+questions_v1 = Blueprint('questions_v1', __name__, url_prefix='/api/v1/')
 
-""" This route grabs all questions and displays them """
-@version1.route("/questions", methods=['GET'])
+""" This route displays all questions """
+@questions_v1.route("/questions", methods=['GET'])
 def get_questions():
     return make_response(jsonify({
         "status": "ok",
         "questions": questions_list.db
     }), 200)
 
-""" This route grabs a single question and displays """
-@version1.route("/questions/<int:questionID>", methods=['GET'])
+""" This route displays a single question """
+@questions_v1.route("/questions/<int:questionID>", methods=['GET'])
 def get_question(questionID):
-    data = request.get_json()
+    # data = request.get_json()
     question = [que for que in questions_list.db if que['id'] == questionID]
     if question:
         return make_response(jsonify({
             "status": "ok",
             "question": question[0]
         }), 201)
+    else:
+        return make_response(jsonify({
+            "status": 404,
+            "Error": "Page Not Found!"
+        }), 404)
 
 """ This route posts a question """
-@version1.route("/questions", methods=['POST'])
+@questions_v1.route("/questions", methods=['POST'])
 def post_question():
     data = request.get_json()
 
