@@ -24,7 +24,7 @@ def get_question(questionID):
         return make_response(jsonify({
             "status": "ok",
             "question": question[0]
-        }), 201)
+        }), 200)
     else:
         return make_response(jsonify({
             "status": 404,

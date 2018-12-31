@@ -100,10 +100,10 @@ class TestUser(BaseTest):
     #         "password": self.user['password']
     #     }
 
-    #     signup = self.post_req(data=self.user)
+        # signup = self.post_req(data=self.user)
     #     login = self.post_req('/api/v1/auth/login', payload)
 
-    #     self.assertEqual(login.status_code, 201)
+        # self.assertEqual(signup.status_code, 201)
     #     self.assertEqual(login.json['Error'], "Account not found, try signing up")
 
     def test_get_all_users(self):
