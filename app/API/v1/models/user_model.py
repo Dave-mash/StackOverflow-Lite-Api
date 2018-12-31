@@ -1,6 +1,8 @@
+import os
 from werkzeug.security import generate_password_hash, check_password_hash
+from .base_model import BaseModel
 
-class UserModel:
+class UserModel(BaseModel):
     """ add user a user to a database """
 
     def __init__(self):
@@ -9,7 +11,7 @@ class UserModel:
         self.db = []
 
     def create_account(self, payload):
-        payload["id"] = len(self.db)
+        payload["id"] = os.getenv('SECRET_KEY', 'this_is_my_key')
         payload['password'] = generate_password_hash(payload['password'])
         
         # Check for duplicate email and username
@@ -28,7 +30,8 @@ class UserModel:
         
         if not self.dup_email and not self.dup_username:
             self.db.append(payload)
-            return self.db
+
+        return payload['id']
 
     def get_user(self, email, password):
         user = [user for user in self.db if email == user['email']]

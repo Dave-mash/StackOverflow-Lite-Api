@@ -8,13 +8,9 @@ class QuestionsModel:
 
     def write_question(self, item):
         if item:
-            # user = [user for user in user_model.db if user['email'] == item['email']]
-            # if user and user.logged:
             self.db.append(item)
             return self.db
-            # else:
-                # return {"Error": "You are not logged in"}
-
+            
     def edit_question(self, id, updates=None):
         for i in range(len(self.db)):
             if self.db[i]["id"] == updates["id"]:

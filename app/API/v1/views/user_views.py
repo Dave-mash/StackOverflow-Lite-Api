@@ -1,5 +1,6 @@
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask import request, jsonify, make_response, Blueprint
+import jwt
 from app.API.v1.utils.validators import RegistrationForm, LoginForm
 from app.API.v1.models.user_model import UserModel
 from app.API.v1.models.questions_model import QuestionsModel 
@@ -20,7 +21,7 @@ def get():
 @users_v1.route("/auth/signup", methods=['GET', 'POST'])
 def registration():
     data = request.get_json()
-    # questions = [que for que in questions_model.db if que['id'] == ]
+    # user_id = [que for que in questions_model.db if que['id'] == ]
 
     # Validator instance
     user1 = RegistrationForm(
@@ -55,26 +56,31 @@ def registration():
         return json('Your password must have at least a lower,  uppercase, digit and special character and must be longer than 6 characters')
     
     # Register user
-    user_model.create_account(
+    user_id = user_model.create_account(
         {
             "username": data['username'],
             "email": data['email'],
             "password": generate_password_hash(data['password']),
-            "logged on": user_model.logged[0],
-            "created_at": datetime.now()
-            "password": data['password'],
+            "created_at": datetime.now(),
             # "questions": questions 
         }
     )
+    
+    token = user_model.encode_auth_token('user_id')
+
+    res = {
+        "message": "{} registered successfully".format(data['email']),
+        "AuthToken": "{}".format(token),
+        "username": data['username'],
+        "user_id": "{}".format(user_id)
+    }
+
     if user_model.dup_email:
         return json(user_model.dup_email['Error'])
     elif user_model.dup_username:
         return json(user_model.dup_username['Error'])
 
-    return make_response(jsonify({
-        "message": "{} registered successfully".format(data['email']),
-        "username": data['username']
-    }), 201)
+    return make_response(jsonify({ **res }), 201)
 
 """ This route allows registered users to log in """
 @users_v1.route("/auth/login", methods=['GET', 'POST'])
@@ -88,24 +94,6 @@ def login():
     log_user.valid_password(data['password'])
 
     # check for existing account
-    exists = [ex for ex in user_model.db if ex['email'] == log_user.email]
-    pass_match = [pas for pas in user_model.db if check_password_hash(pas['password'], password)]
-
-    if exists:
-        # log_user.get_questions(question[0] or question[0])
-        if pass_match:
-            exists[0]["logged on"] = True
-
-            return make_response(jsonify({
-                "logged": exists[0]["logged on"],
-                "message": "logged in as {}".format(data['email']),
-                "created_at": exists[0]['created_at']
-            }), 201)
-        else:
-            return make_response(jsonify({
-                "Error": "Incorrect password please check your credentials"
-            }), 201)
-    else:
     if user_model.get_user(email, password) == 'SUCCESS':
         return make_response(jsonify({
             "message": "logged in as {}".format(email)

@@ -16,18 +16,17 @@ class TestQuestions(BaseTest):
         res = self.client.get(path)
         return res
 
-    def test_get_all_questions(self):
-        """ Test that all questions can be fetched """
+    # def test_get_all_questions(self):
+    #     """ Test that all questions can be fetched """
 
-        get = self.get_req()
-        self.assertEqual(get.status_code, 200)
-        self.assertEqual(get.json['questions'], [])
+    #     get = self.get_req()
+    #     self.assertEqual(get.status_code, 200)
+    #     self.assertEqual(get.json['questions'], [])
 
-    # def test_get_a_single_question(self):
-    #     """ Test that a single question can be fetched """
+    def test_get_a_single_question(self):
+        """ Test that a single question can be fetched """
 
-    #     que = { **self.question }
-    #     que['email'] = "email.com" 
-    #     payload = self.post_req(data=que)
-    #     self.assertEqual(payload.status_code, 400)
-    #     self.assertEqual(payload.json['Error'], "Your name should be at least 3 to 20 characters")
+        que = { **self.question }
+        payload = self.get_req(path='/api/v1/questions/<int:questionID>')
+        # self.assertEqual(payload.status_code, 400)
+        # self.assertEqual(payload.json['Error'], "Your name should be at least 3 to 20 characters")
