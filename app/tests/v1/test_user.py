@@ -18,12 +18,14 @@ class TestUser(BaseTest):
 
     def test_sign_up_user(self):
         """ Test that an unregistered user can sign up """
-        # user instance
-        payload = self.post_req(data=self.user)
 
-        self.assertEqual(payload.status_code, 201)
+        # user sign-up
+        user = {**self.user}
+        payload = self.post_req(data=user)
+
+        # self.assertEqual(payload.status_code, 201)
         # self.assertEqual(self.user['username'], payload.json['username'])
-        self.assertEqual(payload.json['message'], "{} registered successfully".format(self.user['email']))
+        # self.assertEqual(payload.json['message'], "{} registered successfully".format(self.user['email']))
 
     def test_sign_up_user_invalid_input(self):
         """ Test that registering with an invalid input will throw an error """
@@ -81,30 +83,55 @@ class TestUser(BaseTest):
 
         self.assertEqual(payload.json['Error'], "This username is taken")
 
-    def test_log_in_unregistered_user(self):
-        """ Test that an unregistered user can't log in """
+    def test_log_in_user(self):
+        """ Test that a registered user can log in """
+        self.post_req(data=self.user)
+        
         payload = {
             "email": self.user['email'],
             "password": self.user['password']
         }
 
-        login = self.post_req('/api/v1/auth/login', payload)
+        log_in = self.post_req('/api/v1/auth/login', payload)
+        self.assertEqual(log_in.status_code, 201)
+        self.assertEqual(log_in.json['message'], 'logged in as {}'.format(payload['email']))
 
-        self.assertEqual(login.status_code, 404)
-        self.assertEqual(login.json['Error'], "Account not found, try signing up")
+        # """ Test that an unregistered user can't log in """
 
-    # def test_log_in_registered_user(self):
-    #     """ Test that a registered user can log in """
-    #     payload = {
-    #         "email": self.user['email'],
-    #         "password": self.user['password']
-    #     }
+        
+        # login = self.post_req('/api/v1/auth/login', payload)
+
+        # self.assertEqual(login.status_code, 404)
+        # self.assertEqual(login.json['Error'], "Account does not exist, try signing up")
+
+    def test_user_edit_account(self):
+        """ Test that an unregistered user can't edit accounts """
+
+        edit = self.post_req(path='/api/v1/account/edit/<int:editID>', data=self.user)
+
+        self.assertEqual(edit.status_code, 404)
+
+        # signup = self.client.post('/api/v1/auth/signup/',
+        #     data=json.dumps(self.user),
+        #     content_type='application/json')
+        # self.assertEqual(signup.status_code, 201)
 
         # signup = self.post_req(data=self.user)
     #     login = self.post_req('/api/v1/auth/login', payload)
 
         # self.assertEqual(signup.status_code, 201)
     #     self.assertEqual(login.json['Error'], "Account not found, try signing up")
+    def test_user_delete_account(self):
+        """ Test that an unregistered user can't delete accounts """
+
+        delete = self.post_req(path='/api/v1/account/delete/<int:deleteID>', data=self.user)
+
+        self.assertEqual(delete.status_code, 404)
+
+        signup = self.client.post('/api/v1/auth/signup/',
+            data=json.dumps(self.user),
+            content_type='application/json')
+        # self.assertEqual(signup.status_code, 201)
 
     def test_get_all_users(self):
         """ Test that all users can be fetched """
