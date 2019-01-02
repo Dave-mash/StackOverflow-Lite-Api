@@ -60,9 +60,8 @@ def registration():
             "username": data['username'],
             "email": data['email'],
             "password": generate_password_hash(data['password']),
-            "logged on": user_model.logged[0],
-            "created_at": datetime.now()
-            "password": data['password'],
+            "created_at": datetime.now(),
+            "password": data['password']
             # "questions": questions 
         }
     )
@@ -91,21 +90,6 @@ def login():
     exists = [ex for ex in user_model.db if ex['email'] == log_user.email]
     pass_match = [pas for pas in user_model.db if check_password_hash(pas['password'], password)]
 
-    if exists:
-        # log_user.get_questions(question[0] or question[0])
-        if pass_match:
-            exists[0]["logged on"] = True
-
-            return make_response(jsonify({
-                "logged": exists[0]["logged on"],
-                "message": "logged in as {}".format(data['email']),
-                "created_at": exists[0]['created_at']
-            }), 201)
-        else:
-            return make_response(jsonify({
-                "Error": "Incorrect password please check your credentials"
-            }), 201)
-    else:
     if user_model.get_user(email, password) == 'SUCCESS':
         return make_response(jsonify({
             "message": "logged in as {}".format(email)
