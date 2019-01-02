@@ -23,11 +23,3 @@ class TestQuestions(BaseTest):
         self.assertEqual(get.status_code, 200)
         self.assertEqual(get.json['questions'], [])
 
-    # def test_get_a_single_question(self):
-    #     """ Test that a single question can be fetched """
-
-    #     que = { **self.question }
-    #     que['email'] = "email.com" 
-    #     payload = self.post_req(data=que)
-    #     self.assertEqual(payload.status_code, 400)
-    #     self.assertEqual(payload.json['Error'], "Your name should be at least 3 to 20 characters")
