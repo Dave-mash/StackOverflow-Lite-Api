@@ -6,6 +6,7 @@ class BaseTest(unittest.TestCase):
     def setUp(self):
         """ Initializes app"""
         self.app = create_app('testing')
+        self.app.testing = True
         self.client = self.app.test_client()
     
         self.user = {
@@ -18,8 +19,9 @@ class BaseTest(unittest.TestCase):
         }
         
         self.question = {
+            "username": "John Doe",
             "email": "email@test.com",
-            "title": "email",
+            "title": "JWT",
             "question": "What is JWT in programming?"
         }
 

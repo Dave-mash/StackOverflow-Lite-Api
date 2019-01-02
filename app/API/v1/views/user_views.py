@@ -62,7 +62,7 @@ def registration():
             "email": data['email'],
             "password": generate_password_hash(data['password']),
             "created_at": datetime.now(),
-            # "questions": questions 
+            "password": data['password']
         }
     )
     
